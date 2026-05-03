@@ -8,9 +8,20 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+import mezz.jei.Internal;
+import mezz.jei.bookmarks.BookmarkList;
+import mezz.jei.config.BookmarkOverlayToggleEvent;
+import mezz.jei.config.Config;
+import mezz.jei.config.KeyBindings;
+import mezz.jei.gui.ingredients.IIngredientListElement;
+import mezz.jei.gui.overlay.bookmarks.BookmarkOverlay;
+import net.minecraft.item.Item;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.commons.lang3.tuple.Pair;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import net.minecraft.client.Minecraft;
@@ -20,15 +31,13 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.gen.structure.StructureOceanMonumentPieces.EntryRoom;
 import net.minecraftforge.fml.client.config.GuiUtils;
 import vazkii.patchouli.api.BookDrawScreenEvent;
+import vazkii.patchouli.client.JeiBookmarkAccess;
 import vazkii.patchouli.client.base.ClientTicker;
 import vazkii.patchouli.client.base.PersistentData;
 import vazkii.patchouli.client.base.PersistentData.DataHolder.BookData.Bookmark;
@@ -67,10 +76,12 @@ public abstract class GuiBook extends GuiScreen {
 
 	public int ticksInBook;
 	public int maxScale;
-	
-	boolean needsBookmarkUpdate = false;
+    private BookmarkList jeiBookmarks;
 
-	public GuiBook(Book book) {
+	boolean needsBookmarkUpdate = false;
+    private List<ItemStack> jeiBookmarkedItemStacks = Collections.emptyList();
+
+    public GuiBook(Book book) {
 		this.book = book;
 	}
 	
@@ -98,7 +109,9 @@ public abstract class GuiBook extends GuiScreen {
 		buttonList.add(new GuiButtonBookBack(this, width / 2 - 9, bookTop + FULL_HEIGHT - 5));
 		buttonList.add(new GuiButtonBookArrow(this, bookLeft - 4, bookTop + FULL_HEIGHT - 6, true));
 		buttonList.add(new GuiButtonBookArrow(this, bookLeft + FULL_WIDTH - 14, bookTop + FULL_HEIGHT - 6, false));
-		
+        this.jeiBookmarks = JeiBookmarkAccess.getBookmarkList();
+        updateLookupList();
+
 		addBookmarkButtons();
 	}
 
@@ -204,7 +217,13 @@ public abstract class GuiBook extends GuiScreen {
 				targetPage = provider;
 			}
 
-			GuiUtils.preItemToolTip(tooltipStack);
+            if(isItemStackJEIBookmarked(tooltipStack)) {
+                tooltip.add(TextFormatting.GREEN + "Item is bookmarked in JEI");
+            } else {
+                tooltip.add(TextFormatting.GOLD + "Press " + KeyBindings.bookmark.getDisplayName() + " to bookmark in JEI");
+            }
+
+            GuiUtils.preItemToolTip(tooltipStack);
 			FontRenderer font = tooltipStack.getItem().getFontRenderer(tooltipStack);
 			this.drawHoveringText(tooltip, mouseX, mouseY, (font == null ? fontRenderer : font));
 			GuiUtils.postItemToolTip();
@@ -276,6 +295,40 @@ public abstract class GuiBook extends GuiScreen {
 			break;
 		}
 	}
+
+    @Override
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        super.keyTyped(typedChar, keyCode);
+
+        if (keyCode == KeyBindings.bookmark.getKeyCode()) {
+            if(tooltipStack != null && !tooltipStack.isEmpty() && jeiBookmarks != null) {
+                if (!isItemStackJEIBookmarked(tooltipStack)) {
+                    jeiBookmarks.add(tooltipStack);
+                    updateLookupList();
+
+                    if (!Config.isBookmarkOverlayEnabled()) {
+                        Config.toggleBookmarkEnabled();
+                    }
+                }
+            }
+        }
+    }
+
+    private void updateLookupList() {
+        this.jeiBookmarkedItemStacks = jeiBookmarks
+                .getIngredientList()
+                .stream()
+                .map(IIngredientListElement::getIngredient)
+                .filter(ItemStack.class::isInstance)
+                .map(ItemStack.class::cast)
+                .collect(Collectors.toList());
+    }
+
+    private boolean isItemStackJEIBookmarked(ItemStack itemStack) {
+        return jeiBookmarkedItemStacks
+                .stream()
+                .anyMatch((stack) -> ItemStack.areItemsEqual(stack, itemStack));
+    }
 
 	@Override
 	public void handleMouseInput() throws IOException {

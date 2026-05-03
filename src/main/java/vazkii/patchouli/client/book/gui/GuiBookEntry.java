@@ -234,8 +234,9 @@ public class GuiBookEntry extends GuiBook implements IComponentRenderContext {
 		mc.getRenderItem().renderItemAndEffectIntoGUI(stack, x, y);
 		mc.getRenderItem().renderItemOverlays(fontRenderer, stack, x, y);
 		
-		if(isMouseInRelativeRange(mouseX, mouseY, x, y, 16, 16))
-			setTooltipStack(stack);
+		if(isMouseInRelativeRange(mouseX, mouseY, x, y, 16, 16)) {
+            setTooltipStack(stack);
+        }
 		RenderHelper.disableStandardItemLighting();
 	}
 	

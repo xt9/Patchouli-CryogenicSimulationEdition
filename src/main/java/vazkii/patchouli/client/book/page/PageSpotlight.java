@@ -17,13 +17,14 @@ public class PageSpotlight extends PageWithText {
 	boolean linkRecipe;
 
 	transient ItemStack itemStack;
-	
+
 	@Override
 	public void build(BookEntry entry, int pageNum) {
 		itemStack = ItemStackUtil.loadStackFromString(item);
 		
-		if(linkRecipe)
-			entry.addRelevantStack(itemStack, pageNum);
+		if (linkRecipe) {
+            entry.addRelevantStack(itemStack, pageNum);
+        }
 	}
 
 	@Override
@@ -34,10 +35,10 @@ public class PageSpotlight extends PageWithText {
 		mc.renderEngine.bindTexture(book.craftingResource);
 		GlStateManager.enableBlend();
 		Gui.drawModalRectWithCustomSizedTexture(GuiBook.PAGE_WIDTH / 2 - w / 2, 10, 0, 128 - h, w, h, 128, 128);
-		
+
 		parent.drawCenteredStringNoShadow(title != null && !title.isEmpty() ? title : itemStack.getDisplayName(), GuiBook.PAGE_WIDTH / 2, 0, book.headerColor);
 		parent.renderItemStack(GuiBook.PAGE_WIDTH / 2 - 8, 15, mouseX, mouseY, itemStack);
-		
+
 		super.render(mouseX, mouseY, pticks);
 	}
 
