@@ -41,11 +41,12 @@ repositories {
 }
 dependencies {
     compileOnly 'curse.maven:bnbgamingcore-274341:2991671'
+    compileOnly 'curse.maven:jei-238222:5846804'
 }
 
 minecraft {
     version = "${config.mc_version}-${config.forge_version}"
-    runDir = "eclipse/assets"
+    runDir = "run"
 
     mappings = config.mc_mappings
     replace 'GRADLE:BUILD', config.build_number
