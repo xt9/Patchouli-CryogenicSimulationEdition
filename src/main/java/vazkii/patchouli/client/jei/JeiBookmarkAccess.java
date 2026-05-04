@@ -1,4 +1,4 @@
-package vazkii.patchouli.client;
+package vazkii.patchouli.client.jei;
 
 import mezz.jei.Internal;
 import mezz.jei.input.InputHandler;

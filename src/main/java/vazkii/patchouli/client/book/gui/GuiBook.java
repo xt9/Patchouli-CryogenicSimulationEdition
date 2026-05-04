@@ -11,17 +11,15 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import mezz.jei.Internal;
+import mezz.jei.api.recipe.IFocus;
 import mezz.jei.bookmarks.BookmarkList;
-import mezz.jei.config.BookmarkOverlayToggleEvent;
 import mezz.jei.config.Config;
 import mezz.jei.config.KeyBindings;
+import mezz.jei.gui.Focus;
 import mezz.jei.gui.ingredients.IIngredientListElement;
-import mezz.jei.gui.overlay.bookmarks.BookmarkOverlay;
-import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
+import mezz.jei.gui.recipes.RecipesGui;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.commons.lang3.tuple.Pair;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import net.minecraft.client.Minecraft;
@@ -37,7 +35,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.config.GuiUtils;
 import vazkii.patchouli.api.BookDrawScreenEvent;
-import vazkii.patchouli.client.JeiBookmarkAccess;
+import vazkii.patchouli.client.jei.JeiBookmarkAccess;
 import vazkii.patchouli.client.base.ClientTicker;
 import vazkii.patchouli.client.base.PersistentData;
 import vazkii.patchouli.client.base.PersistentData.DataHolder.BookData.Bookmark;
@@ -300,16 +298,31 @@ public abstract class GuiBook extends GuiScreen {
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         super.keyTyped(typedChar, keyCode);
 
-        if (keyCode == KeyBindings.bookmark.getKeyCode()) {
-            if(tooltipStack != null && !tooltipStack.isEmpty() && jeiBookmarks != null) {
-                if (!isItemStackJEIBookmarked(tooltipStack)) {
-                    jeiBookmarks.add(tooltipStack);
-                    updateLookupList();
+        if (tooltipStack == null || tooltipStack.isEmpty()) {
+            return;
+        }
 
-                    if (!Config.isBookmarkOverlayEnabled()) {
-                        Config.toggleBookmarkEnabled();
-                    }
+        if (keyCode == KeyBindings.bookmark.getKeyCode() && jeiBookmarks != null) {
+            if (!isItemStackJEIBookmarked(tooltipStack)) {
+                jeiBookmarks.add(tooltipStack);
+                updateLookupList();
+
+                if (!Config.isBookmarkOverlayEnabled()) {
+                    Config.toggleBookmarkEnabled();
                 }
+            }
+        }
+
+        if (keyCode == KeyBindings.showRecipe.getKeyCode()) {
+            RecipesGui recipesGui = Internal.getRuntime() != null ? Internal.getRuntime().getRecipesGui() : null;
+            if(recipesGui != null) {
+                recipesGui.show(new Focus<Object>(IFocus.Mode.OUTPUT, tooltipStack));
+            }
+        }
+        if (keyCode == KeyBindings.showUses.getKeyCode()) {
+            RecipesGui recipesGui = Internal.getRuntime() != null ? Internal.getRuntime().getRecipesGui() : null;
+            if(recipesGui != null) {
+                recipesGui.show(new Focus<Object>(IFocus.Mode.INPUT, tooltipStack));
             }
         }
     }
